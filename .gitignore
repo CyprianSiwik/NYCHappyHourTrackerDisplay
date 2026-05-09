@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Docker
+docker-compose.override.yml
+
+# iOS
+ios/HappyHourTracker.xcodeproj/xcuserdata/
+ios/HappyHourTracker.xcodeproj/project.xcworkspace/xcuserdata/
+ios/*.xcuserstate
+ios/DerivedData/
+ios/build/
+ios/Pods/
+HappyHourTracker/**/*.xcuserstate
+HappyHourTracker/**/xcuserdata/
+HappyHourTracker/DerivedData/
+HappyHourTracker/build/
+
+# Alembic
+backend/alembic/versions/__pycache__/
+
+# Logs
+*.log
