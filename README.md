@@ -17,65 +17,6 @@ Happy Hour Tracker NYC scrapes happy hour data from restaurant websites, Yelp, a
 
 The backend is fully event-driven: a Redis Pub/Sub pipeline moves data through discrete stages (Discovery → Validation → DB Write → Change Detection), each independently subscribing and publishing without shared state. When a change is detected, the pipeline publishes to an app channel that bridges into the WebSocket hub, delivering a targeted push to every connected iOS client.
 
-## Architecture
-
-```mermaid
-flowchart TD
-    subgraph iOS ["iOS App (SwiftUI / Combine)"]
-        LM[LocationManager]
-        EB_iOS[EventBus\nPassthroughSubject]
-        LVM[ListViewModel]
-        WSM[WebSocketManager]
-        LM -->|locationUpdated event| EB_iOS
-        EB_iOS -->|filtersChanged / appForegrounded| LVM
-        EB_iOS -->|appForegrounded / appBackgrounded| WSM
-    end
-
-    subgraph API ["FastAPI (Python 3.11)"]
-        REST[REST Endpoints\n/restaurants, /happy-hours]
-        WS[WebSocket Hub\n/ws]
-    end
-
-    subgraph DB ["PostgreSQL 16 + PostGIS"]
-        PG[(Restaurants\nHappyHourVersions\nPipelineEvents)]
-    end
-
-    subgraph Pipeline ["Redis Pub/Sub Pipeline"]
-        CH_SCRAPE[channel: pipeline.scrape]
-        CH_VALIDATE[channel: pipeline.validate]
-        CH_DBWRITE[channel: pipeline.db_write]
-        CH_CHANGE[channel: pipeline.change_detect]
-        CH_APP[channel: app.changes]
-
-        CH_SCRAPE -->|scrape_completed| CH_VALIDATE
-        CH_VALIDATE -->|validation_completed| CH_DBWRITE
-        CH_DBWRITE -->|db_updated| CH_CHANGE
-        CH_CHANGE -->|happy_hour_changed| CH_APP
-    end
-
-    subgraph Workers ["Background Workers"]
-        CW[Celery Worker\nscrape_restaurant task]
-        CB[Celery Beat\nmonthly_rescrape_all]
-        PW[Pipeline Worker\nasync event loop]
-    end
-
-    subgraph Notifications ["Push Notifications"]
-        APNS[APNs\n"starting soon" alerts]
-    end
-
-    LVM -->|HTTP GET| REST
-    REST --> PG
-    WSM <-->|WebSocket| WS
-    CH_APP -->|bridge| WS
-    WS -->|broadcast| WSM
-    CB -->|publishes scrape_triggered| CH_SCRAPE
-    CW --> CH_SCRAPE
-    PW -->|subscribes all channels| Pipeline
-    PW --> PG
-    CB -->|schedules APNs task| APNS
-    APNS -->|"starting soon" push| iOS
-```
-
 ## Tech Stack
 
 | Layer | Technologies |
